@@ -67,6 +67,9 @@ python -m critdeck
 The installed `critdeck` command does the same. Ctrl+C, or SIGTERM where the
 platform supports it, shuts the bot down cleanly.
 
+To run it as a service in the homelab container, follow
+[`deploy/INSTALL.md`](deploy/INSTALL.md).
+
 ## Configuration
 
 Settings come from the environment, then from `.env` in the working directory;

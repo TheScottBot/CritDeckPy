@@ -1,20 +1,57 @@
 # Security
 
-This file is completed when the bot is packaged for deployment.
+## What is trusted and what is not
 
-## Trust boundary
+| Input | Trusted? | How it is handled |
+|---|---|---|
+| Slash command options | No | Discord types `level` as an integer; the bot still checks the range and refuses anything else |
+| Typed prefix messages | No | Parsed by a strict grammar with a length bound; refused rather than truncated; never logged |
+| Deck files in `decks/` | Partly: written by the operator, but third party text | Size and file count bounded, every field checked, unknown fields refused; card text is only ever sent as text |
+| `.env` and the environment | Yes, written by the operator | Size bounded, unknown keys refused, values never printed |
+| The bot token | Secret | Read from `DISCORD_TOKEN` only; never logged, printed or shown in a repr; `.env` is gitignored and readable only by the service |
 
-Discord interaction options and backup prefix message content are untrusted.
-The prefix surface needs the privileged message content intent, which is
-requested explicitly and stated in the startup log. The bot token is a secret
-and is never logged or committed.
+The bot stores no personal data. A server's id is used in memory as the key to
+its deck and is gone on restart.
+
+## Logging
+
+Logs record command names, outcomes, input lengths, deck file problems, command
+syncs and failed replies by status code. They never record message content, card
+text or the token, and tests check that.
 
 ## Accepted risks
 
-To be stated by the author in their own words before release. Carried over from
-the Go bot so far: deck state lives in memory only and is lost on restart, deliberately,
-because restart is the author's full reset.
+Drafted from the author's decisions on 24 October 2026; to be confirmed by the
+author before release.
+
+- Decks live in memory only and are lost on restart. This is deliberate: a
+  restart is the guaranteed full reset when something misbehaves.
+- The typed backup commands need Discord's privileged Message Content Intent, so
+  the bot can read every message in channels it can see. It acts only on
+  messages that start with the prefix and logs none of them.
+- One hidden reply links to an external GIF host, kept from the Go bot.
+- discord.py 2.7.1 uses a function Python 3.14 deprecates; the warning is
+  exempted narrowly in the tests until discord.py releases a fix.
 
 ## Limitations
 
-To be stated before release.
+- Deck file paths and names appear in the log when a file is left out, so the
+  log can reveal which extension and special level files exist.
+- The deployment lock is for one platform: Debian 13, x86_64, Python 3.13.
+  Another host needs its own lock.
+- Discord rate limits global command syncs; the bot syncs only when asked.
+
+## Dependency scanning
+
+- CI runs `pip-audit` on every pull request against the deployment lock, using
+  the PyPI and OSV advisory databases. Run it locally with:
+
+```bash
+python -m pip_audit --requirement deploy/requirements-debian13-x86_64-py313.txt --disable-pip --require-hashes --progress-spinner off
+```
+
+- Dependabot proposes weekly updates for the Python dependencies, the deployment
+  lock and the pinned CI actions, and raises security alerts as advisories are
+  published.
+
+No finding is currently accepted without a fix.

@@ -49,3 +49,8 @@ jobs:
 
       - name: Tests
         run: python -m pytest
+
+      # Every pinned runtime dependency in the deployment lock, checked against
+      # the PyPI and OSV advisory databases.
+      - name: Dependency audit
+        run: python -m pip_audit --requirement deploy/requirements-debian13-x86_64-py313.txt --disable-pip --require-hashes --progress-spinner off

@@ -1,0 +1,41 @@
+# CritDeck under systemd, for the homelab container. Install steps are in
+# deploy/INSTALL.md.
+
+[Unit]
+Description=CritDeck Discord bot
+# The bot is useless until it can reach Discord.
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=critdeck
+Group=critdeck
+# .env, decks/ and logs/ are all read relative to here.
+WorkingDirectory=/opt/critdeck
+# Run from the checkout's source rather than an installed package, so updating
+# is a git pull and a restart, with nothing to build on the host.
+Environment=PYTHONPATH=/opt/critdeck/src
+ExecStart=/opt/critdeck/.venv/bin/python -m critdeck
+# A wrong token or a missing base deck exits with status 1; waiting between
+# attempts keeps a broken configuration from spinning, and the journal says why.
+Restart=on-failure
+RestartSec=30
+# systemd stops services with SIGTERM, which the bot handles by closing its
+# Discord connection cleanly.
+
+# The bot needs to read its checkout and write its logs, nothing more.
+ProtectSystem=strict
+ReadWritePaths=/opt/critdeck/logs
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+NoNewPrivileges=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+LockPersonality=yes
+
+[Install]
+WantedBy=multi-user.target

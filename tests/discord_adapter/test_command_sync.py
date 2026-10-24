@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any, cast
 import discord
 
 from critdeck.discord_adapter.command_sync import CommandSyncPlan, sync_application_commands
-from tests.conftest import FakeCommandTree, FakeHttpResponse
+from tests.conftest import FakeCommandTree, build_fake_http_response
 
 if TYPE_CHECKING:
     import pytest
@@ -63,7 +63,7 @@ def test_sync_globally_only_when_asked(caplog: pytest.LogCaptureFixture) -> None
 
 def test_sync_skips_a_guild_that_refuses_and_carries_on(caplog: pytest.LogCaptureFixture) -> None:
     missing_access = discord.Forbidden(
-        FakeHttpResponse(403, "Forbidden"), {"code": 50001, "message": "Missing Access"}
+        build_fake_http_response(403, "Forbidden"), {"code": 50001, "message": "Missing Access"}
     )
     fake_command_tree = FakeCommandTree({FIRST_GUILD_ID: missing_access})
     caplog.set_level(logging.INFO)

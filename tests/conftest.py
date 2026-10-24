@@ -11,7 +11,7 @@ import logging
 import subprocess
 import sys
 from pathlib import Path, PurePosixPath
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import pytest
 
@@ -233,3 +233,10 @@ def restore_root_logging() -> Iterator[None]:
         root_logger.removeHandler(added_handler)
         added_handler.close()
     root_logger.setLevel(original_level)
+
+
+def build_fake_http_response(status: int, reason: str) -> Any:  # noqa: ANN401  # see below
+    # discord.py types an HTTP error's response as aiohttp's or requests' own
+    # response class; the double supplies only the two attributes it reads, so it
+    # is handed over untyped, here and nowhere else.
+    return FakeHttpResponse(status, reason)

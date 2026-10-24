@@ -25,9 +25,9 @@ from critdeck.discord_adapter.slash_commands import SlashCommands
 from tests.conftest import (
     FakeCardShuffler,
     FakeDeckCatalogueLoader,
-    FakeHttpResponse,
     FakeInteraction,
     build_deck_catalogue,
+    build_fake_http_response,
     build_synthetic_card,
 )
 
@@ -232,7 +232,7 @@ def test_a_missed_response_deadline_is_logged_without_content(caplog: pytest.Log
     # Discord answers a reply sent after the deadline with 404 and code 10062,
     # as seen in the test server on 24 October 2026.
     deadline_missed = discord.NotFound(
-        FakeHttpResponse(404, "Not Found"), {"code": 10062, "message": "Unknown interaction"}
+        build_fake_http_response(404, "Not Found"), {"code": 10062, "message": "Unknown interaction"}
     )
     deck_registry = DeckRegistry(FakeCardShuffler())
     deck_registry.create_deck(GUILD_ID, ONE_CARD_PER_TIER[:1])

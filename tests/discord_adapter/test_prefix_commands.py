@@ -24,9 +24,9 @@ from critdeck.discord_adapter.prefix_commands import PrefixCommands
 from tests.conftest import (
     FakeCardShuffler,
     FakeDeckCatalogueLoader,
-    FakeHttpResponse,
     FakePrefixContext,
     build_deck_catalogue,
+    build_fake_http_response,
     build_synthetic_card,
 )
 
@@ -166,7 +166,7 @@ def test_every_command_is_logged_by_name_outcome_and_input_length_never_content(
 
 def test_a_failed_send_is_logged_by_status_and_code_without_content(caplog: pytest.LogCaptureFixture) -> None:
     send_error = discord.HTTPException(
-        FakeHttpResponse(403, "Forbidden"), {"code": 50013, "message": "Missing Permissions"}
+        build_fake_http_response(403, "Forbidden"), {"code": 50013, "message": "Missing Permissions"}
     )
     deck_registry = DeckRegistry(FakeCardShuffler())
     deck_registry.create_deck(GUILD_ID, ONE_CARD_PER_TIER[:1])

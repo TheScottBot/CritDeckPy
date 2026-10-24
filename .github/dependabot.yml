@@ -1,0 +1,17 @@
+# Weekly update proposals for the Python dependencies (pyproject.toml and the
+# deployment lock) and for the pinned CI actions. Security alerts arrive as soon
+# as an advisory is published, regardless of this schedule.
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+  - package-ecosystem: pip
+    directory: /deploy
+    schedule:
+      interval: weekly
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

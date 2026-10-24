@@ -25,6 +25,7 @@ python -m pip install -e ".[dev]"
 | Strict type checking | `python -m mypy` | Locally and CI |
 | Prose and typography scan | `python -m repository_checks.prose_and_typography` | Locally and CI |
 | Full test suite | `python -m pytest` | Locally and CI |
+| Dependency audit of the deployment lock | `python -m pip_audit --requirement deploy/requirements-debian13-x86_64-py313.txt --disable-pip --require-hashes --progress-spinner off` | Locally and CI; needs network access |
 
 The import boundary (no `discord` or adapter import in `core` or `commands`) is
 enforced by the lint step through ruff's banned imports rule.
@@ -45,6 +46,15 @@ levels 0, 5, 9 and 13. It runs only where `decks/player-deck.json` has been
 supplied and skips everywhere else, including CI, with the reason in the
 `pytest -ra` summary. To run it, copy the base deck to `decks/player-deck.json`.
 
+## Deployment files
+
+`tests/deployment/test_deployment_files.py` checks that the deployment lock pins
+every line with a hash and holds each runtime dependency at the version
+`pyproject.toml` pins, and that the systemd unit runs the bot from
+`/opt/critdeck` as the `critdeck` user, restarts with a pause, stops with
+SIGTERM and can write only its log directory. Whether the unit actually starts
+is an author gate on the container.
+
 ## Author gates
 
 | Area | Gate |
@@ -52,7 +62,7 @@ supplied and skips everywhere else, including CI, with the reason in the
 | Checks and CI | The automated criteria reproduced on a clean machine |
 | Prefix commands | Each backup prefix command confirmed in a test server |
 | Slash commands | Commands registered in a test server; each command, the bounds, guild only behaviour and visibility confirmed; slash command contract frozen |
-| Deployment | Deployed to the homelab host under systemd, commands synced, a session played |
+| Deployment | Installed in the homelab container by `deploy/INSTALL.md`, the service started, commands synced, a session played |
 
 ## Testing deviations
 
