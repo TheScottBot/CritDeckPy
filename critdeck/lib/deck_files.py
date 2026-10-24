@@ -32,6 +32,9 @@ DECK_FILE_SUFFIX = ".json"
 MAXIMUM_DECK_FILE_BYTES = 262_144
 # Bounds the work a single new deck can cause, since every file is read each time.
 MAXIMUM_DECK_FILES_PER_DIRECTORY = 100
+# A deck file nests five deep: the document, its cards, a card, its effects, an
+# effect. Eight leaves room above that and refuses anything built to exhaust a parser.
+MAXIMUM_JSON_NESTING_DEPTH = 8
 
 TIERED_DECK_FIELDS = frozenset({"cards"})
 SPECIAL_LEVEL_DECK_FIELDS = frozenset({"level", "cards"})
@@ -61,6 +64,7 @@ class DeckFileRejectionReason(enum.Enum):
     UNEXPECTED_ENTRY = "unexpected entry in the deck directory"
     NOT_UTF8 = "not valid UTF-8"
     MALFORMED_JSON = "malformed JSON"
+    NESTED_TOO_DEEPLY = "nested too deeply"
     DUPLICATE_KEY = "duplicate key"
     WRONG_TYPE = "wrong type"
     UNKNOWN_FIELD = "unknown field"
@@ -275,15 +279,41 @@ def _decode_deck_document(file_bytes: bytes, permitted_fields: frozenset[str]) -
         file_text = file_bytes.decode("utf-8")
     except UnicodeDecodeError:
         _reject(DeckFileRejectionReason.NOT_UTF8)
+    if _deepest_nesting(file_text) > MAXIMUM_JSON_NESTING_DEPTH:
+        _reject(DeckFileRejectionReason.NESTED_TOO_DEEPLY)
     try:
         deck_document: object = json.loads(
             file_text,
             object_pairs_hook=_build_object_rejecting_duplicate_keys,
             parse_constant=_reject_non_standard_constant,
         )
-    except (json.JSONDecodeError, RecursionError):
+    except json.JSONDecodeError:
         _reject(DeckFileRejectionReason.MALFORMED_JSON)
     return _require_object_with_fields(deck_document, permitted_fields)
+
+
+def _deepest_nesting(file_text: str) -> int:
+    # Counted before parsing, because whether Python's parser runs out of stack on
+    # deep nesting depends on the platform: Python 3.14 parsed 100000 levels on
+    # Linux and gave up on Windows. Brackets inside strings are text, not nesting.
+    current_depth = deepest_depth = 0
+    inside_string = escaping = False
+    for character in file_text:
+        if inside_string:
+            if escaping:
+                escaping = False
+            elif character == "\\":
+                escaping = True
+            elif character == '"':
+                inside_string = False
+        elif character == '"':
+            inside_string = True
+        elif character in "[{":
+            current_depth += 1
+            deepest_depth = max(deepest_depth, current_depth)
+        elif character in "]}":
+            current_depth -= 1
+    return deepest_depth
 
 
 def _build_object_rejecting_duplicate_keys(key_value_pairs: list[tuple[str, object]]) -> dict[str, object]:

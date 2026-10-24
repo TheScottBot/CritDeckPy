@@ -11,6 +11,7 @@ from critdeck.lib.deck_files import (
     MINIMUM_PARTY_LEVEL,
     MAXIMUM_DECK_FILE_BYTES,
     MAXIMUM_DECK_FILES_PER_DIRECTORY,
+    MAXIMUM_JSON_NESTING_DEPTH,
     BaseDeckRejectedError,
     Card,
     CardEffect,
@@ -77,8 +78,13 @@ TIERED_REJECTIONS = {
     "byte_order_mark": (b"\xef\xbb\xbf" + build_tiered_deck_bytes(["Setback"]), Reason.MALFORMED_JSON),
     "malformed_json": (b'{"cards": [', Reason.MALFORMED_JSON),
     "not_a_number_constant": (b'{"cards": [], "x": NaN}', Reason.MALFORMED_JSON),
-    # Under the size bound but deep enough to exhaust the parser's recursion limit.
-    "deeply_nested": (b"[" * 100_000 + b"]" * 100_000, Reason.MALFORMED_JSON),
+    # Under the size bound. Whether Python's own parser gives up on this depends on
+    # the platform's stack (it parsed on Linux with Python 3.14), so the bound is ours.
+    "deeply_nested": (b"[" * 100_000 + b"]" * 100_000, Reason.NESTED_TOO_DEEPLY),
+    "one_level_too_deep": (
+        b'{"cards": [' + b"[" * MAXIMUM_JSON_NESTING_DEPTH + b"]" * MAXIMUM_JSON_NESTING_DEPTH + b"]}",
+        Reason.NESTED_TOO_DEEPLY,
+    ),
     "duplicate_key": (b'{"cards": [], "cards": []}', Reason.DUPLICATE_KEY),
     "top_level_array": (b"[]", Reason.WRONG_TYPE),
     "unknown_top_level_field": (
@@ -530,3 +536,14 @@ def test_real_base_deck_cards_available_at_party_level(party_level: int, expecte
     real_cards = parse_tiered_deck_file(REAL_BASE_DECK_PATH.read_bytes())
 
     assert sum(card.strength.minimum_party_level <= party_level for card in real_cards) == expected_card_count
+
+
+def test_nesting_at_the_bound_is_accepted_and_brackets_inside_text_do_not_count() -> None:
+    # A deck file nests five deep (object, cards, card, effects, effect); the bound
+    # leaves room above that, and card text full of brackets is still just text.
+    bracket_heavy_text = "[" * (MAXIMUM_JSON_NESTING_DEPTH * 2) + '{\\"quoted\\"}'
+    deck_bytes = encode_deck_document(
+        {"cards": [build_card_record(effects=[{"damageType": "Magic", "value": bracket_heavy_text}])]}
+    )
+
+    assert parse_tiered_deck_file(deck_bytes)[0].effects[0].value == bracket_heavy_text
