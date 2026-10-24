@@ -1,4 +1,4 @@
-"""The import boundary check fails on a planted violation (datum 0.4, 0.10).
+"""The import boundary check fails on a planted violation.
 
 `core` and `commands` must build and test with nothing but the language
 toolchain, so they may not import discord or the adapter that wraps it.

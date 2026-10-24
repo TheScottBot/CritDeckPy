@@ -34,22 +34,33 @@ a deliberate violation (an em dash, a hyphen run, a `discord` import in `core`
 or `commands`, a type error, unformatted code) and fails if the check stops
 catching it. They are part of the full suite, so every run proves every check.
 
+## Deck data
+
+Every deck test uses synthetic cards built in `tests/conftest.py`. The real card
+text is third party data and is never a fixture.
+
+`tests/core/test_catalogue_real_decks.py` checks the card counts of the real base
+deck: 15, 15, 16 and 4 cards per strength tier, so 15, 30, 46 and 50 cards from
+levels 0, 5, 9 and 13. It runs only where `decks/player-deck.json` has been
+supplied and skips everywhere else, including CI, with the reason in the
+`pytest -ra` summary. To run it, copy the base deck to `decks/player-deck.json`.
+
 ## Author gates
 
-| Phase | Gate |
+| Area | Gate |
 |---|---|
-| CE1 | The automated criteria reproduced on a clean machine |
-| CE5 | Each backup prefix command confirmed in a test server |
-| CE6 | Commands registered in a test server; each command, the bounds, guild only behaviour and visibility confirmed; slash command contract frozen |
-| CE8 | Deployed to the homelab host under systemd, commands synced, a session played |
+| Checks and CI | The automated criteria reproduced on a clean machine |
+| Prefix commands | Each backup prefix command confirmed in a test server |
+| Slash commands | Commands registered in a test server; each command, the bounds, guild only behaviour and visibility confirmed; slash command contract frozen |
+| Deployment | Deployed to the homelab host under systemd, commands synced, a session played |
 
 ## Testing deviations
 
-- UK spelling and quotation marks used for emphasis (datum 0.8) are checked by
-  review, not by the scan. A word list would flag Discord's own API names, and
+- UK spelling and quotation marks used for emphasis are checked by review, not
+  by the scan. A word list would flag Discord's own API names, and
   telling emphasis from quotation needs judgement.
-- Python has no memory or undefined behaviour sanitiser to run (datum 0.10); the
-  language is memory safe, which is why Module A does not apply.
+- There is no memory or undefined behaviour sanitiser to run: Python is memory
+  safe.
 - The formatter planted violation test passes on ruff's default settings as well
   as on this project's, so it proves the formatter check runs, not that a
   project specific format setting is in force.

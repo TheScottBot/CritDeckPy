@@ -16,13 +16,12 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
 ]
-# CE1 is an empty package. Runtime dependencies arrive with the phases that need
-# them, each recorded under datum 0.13 first.
+# No runtime dependencies yet. Each one is recorded with its licence, maintenance
+# status and replacement cost before it is added.
 dependencies = []
 
 [project.optional-dependencies]
-# Pinned exactly so every machine runs the same checks; see the CE1 dependency
-# records in the evaluation.
+# Pinned exactly so every machine runs the same checks.
 dev = [
     "mypy==2.4.0",
     "pytest==9.1.1",
@@ -44,7 +43,7 @@ testpaths = ["tests"]
 # which is deliberately not part of the installed package.
 pythonpath = ["."]
 addopts = ["-ra", "--strict-config", "--strict-markers"]
-# Datum 0.10: warnings are errors, in tests as everywhere else.
+# Warnings are errors, in tests as everywhere else, so nothing degrades quietly.
 filterwarnings = ["error"]
 xfail_strict = true
 
@@ -54,12 +53,12 @@ target-version = "py312"
 src = ["src", "."]
 
 [tool.ruff.lint]
-# Every rule, then the few exclusions below, each with its reason. Datum 0.10 asks
-# for the strictest setting the tooling offers.
+# Every rule, then the few exclusions below, each with its reason, because the
+# strictest setting the tooling offers is the baseline.
 select = ["ALL"]
 ignore = [
     # Docstrings on every module, class and function would mostly paraphrase
-    # descriptive names, which datum 0.6 forbids. Comments explain why instead.
+    # descriptive names. Comments explain why instead.
     "D100", "D101", "D102", "D103", "D104", "D105", "D106", "D107",
     # D203 and D211, D212 and D213 are mutually exclusive pairs; keep D211, D212.
     "D203", "D213",
@@ -78,9 +77,8 @@ ignore = [
 "repository_checks/**" = ["T201"]
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
-# Datum 0.10: portable logic builds and tests with nothing but the language
-# toolchain, so core and commands may not reach Discord, directly or through the
-# adapter.
+# Portable logic builds and tests with nothing but the language toolchain, so
+# core and commands may not reach Discord, directly or through the adapter.
 "discord".msg = "Only critdeck.discord_adapter may import discord."
 "critdeck.discord_adapter".msg = "Only critdeck.discord_adapter may import itself; core and commands are transport free."
 

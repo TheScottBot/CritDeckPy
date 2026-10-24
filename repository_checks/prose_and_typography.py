@@ -1,4 +1,7 @@
-"""Prose and typography scan over every tracked text file (datum 0.8).
+"""Prose and typography scan over every tracked text file.
+
+No em dashes, no en dashes, and no double or triple hyphen runs in prose, which
+are what a document converter turns dashes into.
 
 Run as ``python -m repository_checks.prose_and_typography``. Exits non zero and
 lists every violation as path, line, column and reason.
@@ -13,7 +16,7 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-# Datum 0.8: vendored sources are exempt, listed explicitly by path rather than
+# Vendored sources are exempt, listed explicitly by path rather than
 # matched by pattern, because a pattern eventually excludes something that is not
 # vendored. Nothing is vendored yet.
 VENDORED_PATHS: tuple[Path, ...] = ()
@@ -22,7 +25,7 @@ EM_DASH = "\N{EM DASH}"
 EN_DASH = "\N{EN DASH}"
 
 HYPHEN_RUN_PATTERN = re.compile(r"-{2,}")
-# Datum 0.8 exempts exactly two things from the hyphen run rule: a Markdown table
+# Exactly two things are exempt from the hyphen run rule: a Markdown table
 # separator row and a command line flag token.
 TABLE_SEPARATOR_ROW_PATTERN = re.compile(r"\s*\|?(\s*:?-+:?\s*\|)+\s*:?-*:?\s*")
 FLAG_TOKEN_HYPHEN_COUNT = 2

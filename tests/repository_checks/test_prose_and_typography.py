@@ -1,4 +1,4 @@
-"""The prose and typography scan (datum 0.8) finds every planted violation."""
+"""The prose and typography scan finds every planted violation."""
 
 from __future__ import annotations
 
@@ -94,5 +94,5 @@ def test_scan_files_names_the_file_of_each_violation(tmp_path: Path) -> None:
 
 
 def test_vendored_paths_are_an_explicit_list_and_empty_until_something_is_vendored() -> None:
-    # Datum 0.8: vendored code is excluded by an explicit list, never a pattern.
+    # Vendored code is excluded by an explicit list, never a pattern.
     assert VENDORED_PATHS == ()

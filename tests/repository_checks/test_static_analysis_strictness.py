@@ -1,4 +1,4 @@
-"""The type checker and formatter fail on planted violations (datum 0.4, 0.10)."""
+"""The type checker and formatter fail on planted violations."""
 
 from __future__ import annotations
 

@@ -1,8 +1,8 @@
 name: CI
 
-# Every check the datum requires on a pull request, on every supported Python
-# version: formatting, lint with warnings as errors, strict type checking, the
-# prose and typography scan, and the full test suite. The suite includes the
+# Every check, on every pull request and every supported Python version:
+# formatting, lint with warnings as errors, strict type checking, the prose and
+# typography scan, and the full test suite. The suite includes the
 # planted violation tests that prove each check still catches what it should.
 
 on:

@@ -3,12 +3,9 @@
 A Python port of CritDeck, the Discord bot that builds a shuffled critical hit deck
 for a party level and draws cards from it, one deck per server.
 
-The port is at CE1: an empty, installable package with its checks. There is no
-bot to run yet. To build it and run the checks, see [`TESTING.md`](TESTING.md);
-it needs Python 3.12 or later. The Plan
-record, implementation log and deviation record are kept on the author's machine
-under `docs/untracked/`, which is not tracked, so a fresh clone does not contain
-them.
+The port is in progress: an installable package with its checks and the deck
+catalogue loader. There is no bot to run yet. To build it and run the checks,
+see [`TESTING.md`](TESTING.md); it needs Python 3.12 or later.
 
 ## Where it came from
 
