@@ -58,3 +58,10 @@ HIDDEN_COMMAND_REPLIES = {
     "DMDICE": "25",
     "spray": "https://klipy.com/gifs/spray-bottle-3",
 }
+
+# Slash command descriptions, shown in Discord's command picker. Discord refuses
+# any longer than 100 characters.
+NEW_DECK_COMMAND_DESCRIPTION = "Shuffle a fresh crit deck for this server at a party level."
+PARTY_LEVEL_OPTION_DESCRIPTION = f"The party's level, {MINIMUM_PARTY_LEVEL} to {MAXIMUM_PARTY_LEVEL}."
+DRAW_COMMAND_DESCRIPTION = "Flip the next card from this server's crit deck."
+HELP_COMMAND_DESCRIPTION = "How CritDeck works."

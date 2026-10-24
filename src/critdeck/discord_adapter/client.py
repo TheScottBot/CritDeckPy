@@ -8,7 +8,9 @@ from typing import TYPE_CHECKING, Any
 import discord
 from discord.ext import commands
 
+from critdeck.discord_adapter.command_sync import CommandSyncPlan, sync_application_commands
 from critdeck.discord_adapter.prefix_commands import PrefixCommands
+from critdeck.discord_adapter.slash_commands import SlashCommands
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -25,6 +27,7 @@ class CritDeckBot(commands.Bot):
         command_prefix: str,
         deck_registry: DeckRegistry,
         load_deck_catalogue: Callable[[], DeckCatalogue],
+        command_sync_plan: CommandSyncPlan,
     ) -> None:
         bot_intents = discord.Intents.default()
         # Privileged, and needed only by the typed backup commands: without it
@@ -39,9 +42,13 @@ class CritDeckBot(commands.Bot):
             help_command=None,
         )
         self._prefix_commands = PrefixCommands(deck_registry, load_deck_catalogue, command_prefix)
+        self._slash_commands = SlashCommands(deck_registry, load_deck_catalogue, command_prefix)
+        self._command_sync_plan = command_sync_plan
 
     async def setup_hook(self) -> None:
         await self.add_cog(self._prefix_commands)
+        await self.add_cog(self._slash_commands)
+        await sync_application_commands(self.tree, self._command_sync_plan)
 
     async def on_command_error(
         self, context: commands.Context[Any], exception: commands.CommandError, /
@@ -59,5 +66,6 @@ def build_bot(
     command_prefix: str,
     deck_registry: DeckRegistry,
     load_deck_catalogue: Callable[[], DeckCatalogue],
+    command_sync_plan: CommandSyncPlan,
 ) -> CritDeckBot:
-    return CritDeckBot(command_prefix, deck_registry, load_deck_catalogue)
+    return CritDeckBot(command_prefix, deck_registry, load_deck_catalogue, command_sync_plan)

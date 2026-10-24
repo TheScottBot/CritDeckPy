@@ -11,6 +11,7 @@ from discord.ext import commands
 from critdeck.core.catalogue import StrengthTier
 from critdeck.core.deck_registry import DeckRegistry
 from critdeck.discord_adapter.client import build_bot
+from critdeck.discord_adapter.command_sync import CommandSyncPlan
 from tests.conftest import (
     FakeCardShuffler,
     FakeDeckCatalogueLoader,
@@ -30,6 +31,7 @@ def build_test_bot(command_prefix: str = "?") -> commands.Bot:
         command_prefix,
         DeckRegistry(FakeCardShuffler()),
         FakeDeckCatalogueLoader(build_deck_catalogue(ONE_CARD_PER_TIER)),
+        CommandSyncPlan(guild_ids=(), sync_globally=False),
     )
 
 

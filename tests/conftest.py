@@ -169,3 +169,47 @@ class FakeHttpResponse:
     def __init__(self, status: int, reason: str) -> None:
         self.status = status
         self.reason = reason
+
+
+class FakeInteractionResponse:
+    """Stands in for discord.InteractionResponse: records each reply and its visibility."""
+
+    def __init__(self, send_error: Exception | None) -> None:
+        self.sent_replies: list[tuple[str, bool]] = []
+        self._send_error = send_error
+
+    async def send_message(self, content: str, *, ephemeral: bool) -> None:
+        if self._send_error is not None:
+            raise self._send_error
+        self.sent_replies.append((content, ephemeral))
+
+
+class FakeInteraction:
+    """Stands in for discord.Interaction: the guild it came from and its response."""
+
+    def __init__(self, guild_id: int | None, send_error: Exception | None = None) -> None:
+        self.guild_id = guild_id
+        self.response = FakeInteractionResponse(send_error)
+
+
+class FakeCommandTree:
+    """Stands in for discord.app_commands.CommandTree during a sync.
+
+    The test supplies any error a guild's sync should raise, so this module does
+    not need to import discord.
+    """
+
+    def __init__(self, sync_errors_by_guild_id: Mapping[int, Exception] | None = None) -> None:
+        self.copied_to_guild_ids: list[int] = []
+        self.synced_targets: list[int | None] = []
+        self._sync_errors_by_guild_id = dict(sync_errors_by_guild_id or {})
+
+    def copy_global_to(self, *, guild: FakeGuild) -> None:
+        self.copied_to_guild_ids.append(guild.id)
+
+    async def sync(self, *, guild: FakeGuild | None = None) -> list[object]:
+        target_guild_id = None if guild is None else guild.id
+        if target_guild_id is not None and target_guild_id in self._sync_errors_by_guild_id:
+            raise self._sync_errors_by_guild_id[target_guild_id]
+        self.synced_targets.append(target_guild_id)
+        return [object(), object(), object()]

@@ -19,6 +19,7 @@ from critdeck.core.card_formatting import format_card
 from critdeck.core.catalogue import StrengthTier
 from critdeck.core.deck_registry import DeckRegistry
 from critdeck.discord_adapter.client import build_bot
+from critdeck.discord_adapter.command_sync import CommandSyncPlan
 from critdeck.discord_adapter.prefix_commands import PrefixCommands
 from tests.conftest import (
     FakeCardShuffler,
@@ -45,6 +46,7 @@ def build_prefix_commands(
         command_prefix,
         deck_registry or DeckRegistry(FakeCardShuffler()),
         FakeDeckCatalogueLoader(build_deck_catalogue(ONE_CARD_PER_TIER)),
+        CommandSyncPlan(guild_ids=(), sync_globally=False),
     )
     asyncio.run(critdeck_bot.setup_hook())
     return cast("PrefixCommands", critdeck_bot.get_cog(PrefixCommands.__cog_name__))
