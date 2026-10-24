@@ -48,3 +48,13 @@ HELP_TEXT = (
     "\n"
     "-# Every command also works typed with `{command_prefix}`, for example `{command_prefix}newdeck 7`."
 )
+
+# From the Go bot, each keyed by the exact command that answers it. They are kept
+# out of help and every document on purpose: they are for people who already
+# know them.
+HIDDEN_COMMAND_REPLIES = {
+    "mrbigdice": "Just pick a number and that's your roll",
+    "drbigdice": "Your dice roll factorial!",
+    "DMDICE": "25",
+    "spray": "https://klipy.com/gifs/spray-bottle-3",
+}

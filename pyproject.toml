@@ -16,9 +16,12 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
 ]
-# No runtime dependencies yet. Each one is recorded with its licence, maintenance
-# status and replacement cost before it is added.
-dependencies = []
+# Each runtime dependency is recorded with its licence, maintenance status and
+# replacement cost before it is added. Pinned exactly; the deployment lock with
+# hashes is made for the deployment platform when the bot is packaged.
+dependencies = [
+    "discord.py==2.7.1",
+]
 
 [project.optional-dependencies]
 # Pinned exactly so every machine runs the same checks.
@@ -44,7 +47,13 @@ testpaths = ["tests"]
 pythonpath = ["."]
 addopts = ["-ra", "--strict-config", "--strict-markers"]
 # Warnings are errors, in tests as everywhere else, so nothing degrades quietly.
-filterwarnings = ["error"]
+filterwarnings = [
+    "error",
+    # discord.py 2.7.1 calls asyncio.iscoroutinefunction, deprecated in Python
+    # 3.14 and due for removal in 3.16. The call is upstream's; this exempts that
+    # one message from that one package and nothing else.
+    "ignore:'asyncio.iscoroutinefunction' is deprecated:DeprecationWarning:discord",
+]
 xfail_strict = true
 
 [tool.ruff]
@@ -69,8 +78,9 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-# The adapter is the one place allowed to import discord.
+# The adapter is the one place allowed to import discord, and its tests with it.
 "src/critdeck/discord_adapter/**" = ["TID251"]
+"tests/discord_adapter/**" = ["TID251"]
 # Tests assert by design, their planted inputs are literal values, and pytest
 # passes parametrised expectations, booleans included, positionally.
 "tests/**" = ["S101", "PLR2004", "FBT001"]

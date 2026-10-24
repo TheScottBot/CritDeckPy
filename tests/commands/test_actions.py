@@ -9,15 +9,18 @@ import pytest
 from critdeck.commands.actions import (
     CommandOutcome,
     ResponseVisibility,
+    answer_hidden_command,
     draw_card,
     show_help,
     start_new_deck,
+    start_new_deck_from_text,
 )
 from critdeck.commands.response_strings import (
     BASE_DECK_UNAVAILABLE_TEXT,
     DECK_CREATED_TEXT,
     DIRECT_MESSAGE_TEXT,
     EXTENSIONS_LEFT_OUT_TEXT,
+    HIDDEN_COMMAND_REPLIES,
     NO_DECK_TEXT,
     PARTY_LEVEL_OUT_OF_RANGE_TEXT,
 )
@@ -255,3 +258,82 @@ def test_show_help_formats_commands_as_code() -> None:
 
     for command_usage in ("`/newdeck level`", "`/draw`", "`/help`", "`?newdeck 7`"):
         assert command_usage in help_text
+
+
+def test_start_new_deck_from_text_builds_a_deck_from_a_valid_level() -> None:
+    command_result = start_new_deck_from_text(
+        GUILD_ID, "9", FakeDeckCatalogueLoader(STANDARD_CATALOGUE), DeckRegistry(FakeCardShuffler())
+    )
+
+    assert command_result.outcome is CommandOutcome.DECK_CREATED
+
+
+@pytest.mark.parametrize("level_text", ["", "nine", "1_2", "7 8"])
+def test_start_new_deck_from_text_refuses_malformed_text_with_the_range_message(level_text: str) -> None:
+    deck_catalogue_loader = FakeDeckCatalogueLoader(STANDARD_CATALOGUE)
+
+    command_result = start_new_deck_from_text(
+        GUILD_ID, level_text, deck_catalogue_loader, DeckRegistry(FakeCardShuffler())
+    )
+
+    assert command_result.outcome is CommandOutcome.REJECTED_MALFORMED_PARTY_LEVEL
+    assert command_result.response.text == PARTY_LEVEL_OUT_OF_RANGE_TEXT
+    assert command_result.response.visibility is ResponseVisibility.EPHEMERAL
+    assert deck_catalogue_loader.load_count == 0
+
+
+def test_start_new_deck_from_text_in_a_direct_message_refuses_before_reading_the_level() -> None:
+    command_result = start_new_deck_from_text(
+        None, "nine", FakeDeckCatalogueLoader(STANDARD_CATALOGUE), DeckRegistry(FakeCardShuffler())
+    )
+
+    assert command_result.outcome is CommandOutcome.REJECTED_DIRECT_MESSAGE
+
+
+@pytest.mark.parametrize(("hidden_command_name", "expected_reply"), list(HIDDEN_COMMAND_REPLIES.items()))
+def test_answer_hidden_command_replies_to_the_exact_message(
+    hidden_command_name: str, expected_reply: str
+) -> None:
+    command_result = answer_hidden_command(f"?{hidden_command_name}", "?")
+
+    assert command_result is not None
+    assert command_result.outcome is CommandOutcome.HIDDEN_COMMAND_ANSWERED
+    assert command_result.response.text == expected_reply
+    assert command_result.response.visibility is ResponseVisibility.PUBLIC
+
+
+@pytest.mark.parametrize("hidden_command_name", list(HIDDEN_COMMAND_REPLIES))
+def test_answer_hidden_command_stays_silent_unless_the_message_is_exact(hidden_command_name: str) -> None:
+    # The Go bot matched these exactly, case included, and nothing else.
+    near_misses = [
+        f"?{hidden_command_name.swapcase()}",
+        f"?{hidden_command_name} now",
+        f" ?{hidden_command_name}",
+        f"!{hidden_command_name}",
+    ]
+
+    for near_miss in near_misses:
+        assert answer_hidden_command(near_miss, "?") is None
+
+
+def test_answer_hidden_command_follows_the_configured_prefix() -> None:
+    hidden_command_name = next(iter(HIDDEN_COMMAND_REPLIES))
+
+    assert answer_hidden_command(f"cd!{hidden_command_name}", "cd!") is not None
+    assert answer_hidden_command(f"?{hidden_command_name}", "cd!") is None
+
+
+def test_hidden_command_replies_match_the_go_bot() -> None:
+    assert HIDDEN_COMMAND_REPLIES == {
+        "mrbigdice": "Just pick a number and that's your roll",
+        "drbigdice": "Your dice roll factorial!",
+        "DMDICE": "25",
+        "spray": "https://klipy.com/gifs/spray-bottle-3",
+    }
+
+
+def test_hidden_commands_never_appear_in_help() -> None:
+    help_text = show_help("?").response.text
+
+    for hidden_command_name in HIDDEN_COMMAND_REPLIES:
+        assert hidden_command_name.lower() not in help_text.lower()

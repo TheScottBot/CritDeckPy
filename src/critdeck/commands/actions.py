@@ -13,12 +13,14 @@ from dataclasses import dataclass
 from pathlib import PurePosixPath
 from typing import TYPE_CHECKING
 
+from critdeck.commands.party_level_grammar import parse_party_level_text
 from critdeck.commands.response_strings import (
     BASE_DECK_UNAVAILABLE_TEXT,
     DECK_CREATED_TEXT,
     DIRECT_MESSAGE_TEXT,
     EXTENSIONS_LEFT_OUT_TEXT,
     HELP_TEXT,
+    HIDDEN_COMMAND_REPLIES,
     NO_DECK_TEXT,
     PARTY_LEVEL_OUT_OF_RANGE_TEXT,
 )
@@ -52,7 +54,9 @@ class CommandOutcome(enum.Enum):
     DECK_CREATED = "deck created"
     CARD_DRAWN = "card drawn"
     HELP_SHOWN = "help shown"
+    HIDDEN_COMMAND_ANSWERED = "hidden command answered"
     REJECTED_DIRECT_MESSAGE = "rejected: direct message"
+    REJECTED_MALFORMED_PARTY_LEVEL = "rejected: malformed party level"
     REJECTED_PARTY_LEVEL_OUT_OF_RANGE = "rejected: party level out of range"
     REJECTED_BASE_DECK_UNAVAILABLE = "rejected: base deck unavailable"
     REJECTED_NO_DECK = "rejected: no deck"
@@ -111,6 +115,25 @@ def start_new_deck(
     )
 
 
+def start_new_deck_from_text(
+    guild_id: int | None,
+    level_text: str,
+    load_deck_catalogue: Callable[[], DeckCatalogue],
+    deck_registry: DeckRegistry,
+) -> CommandResult:
+    if guild_id is None:
+        return _direct_message_refusal()
+    party_level = parse_party_level_text(level_text)
+    # Malformed text gets the same reply as an out of range level, since the fix
+    # for both is the same; the outcome tells them apart in the logs.
+    if party_level is None:
+        return CommandResult(
+            CommandResponse(PARTY_LEVEL_OUT_OF_RANGE_TEXT, ResponseVisibility.EPHEMERAL),
+            CommandOutcome.REJECTED_MALFORMED_PARTY_LEVEL,
+        )
+    return start_new_deck(guild_id, party_level, load_deck_catalogue, deck_registry)
+
+
 def draw_card(guild_id: int | None, deck_registry: DeckRegistry) -> CommandResult:
     if guild_id is None:
         return _direct_message_refusal()
@@ -132,6 +155,18 @@ def show_help(command_prefix: str) -> CommandResult:
         CommandResponse(HELP_TEXT.format(command_prefix=command_prefix), ResponseVisibility.EPHEMERAL),
         CommandOutcome.HELP_SHOWN,
     )
+
+
+def answer_hidden_command(message_content: str, command_prefix: str) -> CommandResult | None:
+    # Only the exact message answers, case included, as in the Go bot; anything
+    # else gets silence, so a near miss gives nothing away.
+    for hidden_command_name, hidden_reply in HIDDEN_COMMAND_REPLIES.items():
+        if message_content == command_prefix + hidden_command_name:
+            return CommandResult(
+                CommandResponse(hidden_reply, ResponseVisibility.PUBLIC),
+                CommandOutcome.HIDDEN_COMMAND_ANSWERED,
+            )
+    return None
 
 
 def _direct_message_refusal() -> CommandResult:

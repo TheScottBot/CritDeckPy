@@ -127,3 +127,45 @@ class FakeDeckCatalogueLoader:
             raise self._error
         assert self._deck_catalogue is not None
         return self._deck_catalogue
+
+
+class FakeGuild:
+    def __init__(self, guild_id: int) -> None:
+        self.id = guild_id
+
+
+class FakeMessage:
+    def __init__(self, content: str) -> None:
+        self.content = content
+
+
+class FakePrefixContext:
+    """Stands in for discord.ext.commands.Context: records what the bot sends."""
+
+    def __init__(
+        self,
+        guild_id: int | None,
+        message_content: str,
+        prefix: str = "?",
+        send_error: Exception | None = None,
+    ) -> None:
+        self.guild = None if guild_id is None else FakeGuild(guild_id)
+        self.message = FakeMessage(message_content)
+        self.prefix = prefix
+        # The command the framework resolved; None, as for an unknown command.
+        self.command = None
+        self.sent_texts: list[str] = []
+        self._send_error = send_error
+
+    async def send(self, content: str) -> None:
+        if self._send_error is not None:
+            raise self._send_error
+        self.sent_texts.append(content)
+
+
+class FakeHttpResponse:
+    """The two attributes discord.HTTPException reads from a response."""
+
+    def __init__(self, status: int, reason: str) -> None:
+        self.status = status
+        self.reason = reason
