@@ -8,7 +8,7 @@ import tomllib
 from tests.conftest import REPOSITORY_ROOT
 
 DEPLOYMENT_LOCK_PATH = REPOSITORY_ROOT / "deploy" / "requirements-debian13-x86_64-py313.txt"
-SYSTEMD_UNIT_PATH = REPOSITORY_ROOT / "deploy" / "critdeck.service"
+SYSTEMD_UNIT_PATH = REPOSITORY_ROOT / "deploy" / "critdeckpy.service"
 LOCK_LINE_PATTERN = re.compile(
     r"(?P<name>[A-Za-z0-9._-]+)==(?P<version>[A-Za-z0-9.]+) --hash=sha256:[0-9a-f]{64}"
 )
@@ -55,10 +55,12 @@ def test_lock_holds_each_runtime_dependency_at_its_pyproject_version() -> None:
 def test_unit_runs_the_bot_from_its_checkout_as_its_own_user() -> None:
     service_directives = read_systemd_unit()["Service"]
 
-    assert service_directives["User"] == ["critdeck"]
-    assert service_directives["WorkingDirectory"] == ["/opt/critdeck"]
-    assert service_directives["ExecStart"] == ["/opt/critdeck/.venv/bin/python -m critdeck"]
-    assert service_directives["Environment"] == ["PYTHONPATH=/opt/critdeck/src"]
+    # New names throughout, because the Go bot still runs on the same host from
+    # /opt/critdeck and its service must not be overwritten.
+    assert service_directives["User"] == ["critdeckpy"]
+    assert service_directives["WorkingDirectory"] == ["/opt/CritDeckPy"]
+    assert service_directives["ExecStart"] == ["/opt/CritDeckPy/.venv/bin/python -m critdeck"]
+    assert service_directives["Environment"] == ["PYTHONPATH=/opt/CritDeckPy/src"]
 
 
 def test_unit_restarts_after_a_failure_but_not_in_a_tight_loop() -> None:
@@ -76,7 +78,7 @@ def test_unit_can_write_only_its_log_directory() -> None:
     service_directives = read_systemd_unit()["Service"]
 
     assert service_directives["ProtectSystem"] == ["strict"]
-    assert service_directives["ReadWritePaths"] == ["/opt/critdeck/logs"]
+    assert service_directives["ReadWritePaths"] == ["/opt/CritDeckPy/logs"]
     assert service_directives["NoNewPrivileges"] == ["yes"]
 
 

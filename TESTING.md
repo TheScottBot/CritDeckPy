@@ -51,9 +51,14 @@ supplied and skips everywhere else, including CI, with the reason in the
 `tests/deployment/test_deployment_files.py` checks that the deployment lock pins
 every line with a hash and holds each runtime dependency at the version
 `pyproject.toml` pins, and that the systemd unit runs the bot from
-`/opt/critdeck` as the `critdeck` user, restarts with a pause, stops with
+`/opt/CritDeckPy` as the `critdeckpy` user, restarts with a pause, stops with
 SIGTERM and can write only its log directory. Whether the unit actually starts
 is an author gate on the container.
+
+`tests/deployment/test_deploy_script.py` checks that `deploy/deploy.sh` parses,
+lists its phases in order, refuses an unknown phase before doing anything, and
+names the same directory, service, user, unit and lock as the files it installs.
+No test runs a real phase: they install packages and start services.
 
 ## Author gates
 

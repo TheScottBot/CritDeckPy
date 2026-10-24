@@ -1,22 +1,23 @@
-# CritDeck under systemd, for the homelab container. Install steps are in
-# deploy/INSTALL.md.
+# CritDeck (Python) under systemd, for the homelab container. Installed by
+# deploy/deploy.sh; see deploy/INSTALL.md. Its names differ from the Go bot's
+# (/opt/critdeck), which still runs on the same host.
 
 [Unit]
-Description=CritDeck Discord bot
+Description=CritDeck Discord bot (Python)
 # The bot is useless until it can reach Discord.
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=simple
-User=critdeck
-Group=critdeck
+User=critdeckpy
+Group=critdeckpy
 # .env, decks/ and logs/ are all read relative to here.
-WorkingDirectory=/opt/critdeck
+WorkingDirectory=/opt/CritDeckPy
 # Run from the checkout's source rather than an installed package, so updating
 # is a git pull and a restart, with nothing to build on the host.
-Environment=PYTHONPATH=/opt/critdeck/src
-ExecStart=/opt/critdeck/.venv/bin/python -m critdeck
+Environment=PYTHONPATH=/opt/CritDeckPy/src
+ExecStart=/opt/CritDeckPy/.venv/bin/python -m critdeck
 # A wrong token or a missing base deck exits with status 1; waiting between
 # attempts keeps a broken configuration from spinning, and the journal says why.
 Restart=on-failure
@@ -26,7 +27,7 @@ RestartSec=30
 
 # The bot needs to read its checkout and write its logs, nothing more.
 ProtectSystem=strict
-ReadWritePaths=/opt/critdeck/logs
+ReadWritePaths=/opt/CritDeckPy/logs
 ProtectHome=yes
 PrivateTmp=yes
 PrivateDevices=yes
