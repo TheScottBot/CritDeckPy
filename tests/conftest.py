@@ -9,7 +9,13 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
-from pathlib import Path
+from pathlib import Path, PurePosixPath
+from typing import TYPE_CHECKING
+
+from critdeck.core.catalogue import Card, CardEffect, DeckCatalogue, StrengthTier
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping, Sequence
 
 REPOSITORY_ROOT = Path(__file__).resolve().parent.parent
 REAL_DECK_DIRECTORY = REPOSITORY_ROOT / "decks"
@@ -79,3 +85,29 @@ def run_development_tool(
         encoding="utf-8",
         check=False,
     )
+
+
+def build_synthetic_card(strength: StrengthTier, card_label: str) -> Card:
+    return Card(strength, (CardEffect("Magic", f"Synthetic effect of {card_label}"),))
+
+
+def build_deck_catalogue(
+    tiered_cards: Sequence[Card], special_level_decks: Mapping[int, Sequence[Card]] | None = None
+) -> DeckCatalogue:
+    return DeckCatalogue(
+        tiered_cards=tuple(tiered_cards),
+        special_level_decks={level: tuple(cards) for level, cards in (special_level_decks or {}).items()},
+        loaded_files=(PurePosixPath("player-deck.json"),),
+        left_out_files=(),
+    )
+
+
+class FakeCardShuffler:
+    """Shuffles by reversing, so a test can predict the order, and counts shuffles."""
+
+    def __init__(self) -> None:
+        self.shuffle_count = 0
+
+    def shuffle(self, cards_to_shuffle: list[Card], /) -> None:
+        self.shuffle_count += 1
+        cards_to_shuffle.reverse()
