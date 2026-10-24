@@ -21,7 +21,11 @@ classifiers = [
 # hashes is made for the deployment platform when the bot is packaged.
 dependencies = [
     "discord.py==2.7.1",
+    "python-dotenv==1.2.4",
 ]
+
+[project.scripts]
+critdeck = "critdeck.__main__:main"
 
 [project.optional-dependencies]
 # Pinned exactly so every machine runs the same checks.
@@ -81,6 +85,9 @@ ignore = [
 # The adapter is the one place allowed to import discord, and its tests with it.
 "src/critdeck/discord_adapter/**" = ["TID251"]
 "tests/discord_adapter/**" = ["TID251"]
+# The entry point is where core, commands and the adapter are wired together, so
+# it is the one module outside the adapter that must import it.
+"src/critdeck/__main__.py" = ["TID251"]
 # Tests assert by design, their planted inputs are literal values, and pytest
 # passes parametrised expectations, booleans included, positionally.
 "tests/**" = ["S101", "PLR2004", "FBT001"]

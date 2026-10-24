@@ -7,15 +7,18 @@ them rather than defining its own, and a change to one is a change to all.
 from __future__ import annotations
 
 import json
+import logging
 import subprocess
 import sys
 from pathlib import Path, PurePosixPath
 from typing import TYPE_CHECKING
 
+import pytest
+
 from critdeck.core.catalogue import Card, CardEffect, DeckCatalogue, StrengthTier
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping, Sequence
+    from collections.abc import Iterator, Mapping, Sequence
 
 REPOSITORY_ROOT = Path(__file__).resolve().parent.parent
 REAL_DECK_DIRECTORY = REPOSITORY_ROOT / "decks"
@@ -213,3 +216,20 @@ class FakeCommandTree:
             raise self._sync_errors_by_guild_id[target_guild_id]
         self.synced_targets.append(target_guild_id)
         return [object(), object(), object()]
+
+
+SYNTHETIC_TOKEN = "synthetic.bot.token-not-a-real-credential"  # noqa: S105  # a fixture, deliberately fake
+
+
+@pytest.fixture
+def restore_root_logging() -> Iterator[None]:
+    # Startup configures the root logger; each test that runs it gets the root
+    # logger back as it found it, closing any file it opened.
+    root_logger = logging.getLogger()
+    original_handlers = list(root_logger.handlers)
+    original_level = root_logger.level
+    yield
+    for added_handler in [handler for handler in root_logger.handlers if handler not in original_handlers]:
+        root_logger.removeHandler(added_handler)
+        added_handler.close()
+    root_logger.setLevel(original_level)

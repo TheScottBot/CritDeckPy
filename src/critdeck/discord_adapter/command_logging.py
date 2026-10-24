@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     import discord
 
     from critdeck.commands.actions import CommandResult
+    from critdeck.core.catalogue import DeckFileRejectionReason, LeftOutDeckFile
 
 command_logger = logging.getLogger("critdeck.commands")
 
@@ -36,10 +37,16 @@ def log_command_result(
     if command_result.reshuffled:
         command_logger.info("deck reshuffled command=%s surface=%s", command_name, command_surface.value)
     if command_result.base_deck_rejection_reason is not None:
-        command_logger.error(
-            "base deck rejected reason=%s", command_result.base_deck_rejection_reason.name.lower()
-        )
-    for left_out_file in command_result.left_out_files:
+        log_base_deck_rejection(command_result.base_deck_rejection_reason)
+    log_left_out_deck_files(command_result.left_out_files)
+
+
+def log_base_deck_rejection(rejection_reason: DeckFileRejectionReason) -> None:
+    command_logger.error("base deck rejected reason=%s", rejection_reason.name.lower())
+
+
+def log_left_out_deck_files(left_out_files: tuple[LeftOutDeckFile, ...]) -> None:
+    for left_out_file in left_out_files:
         command_logger.warning(
             "deck file left out path=%s reason=%s",
             left_out_file.relative_path.as_posix(),
