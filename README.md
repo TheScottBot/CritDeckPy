@@ -3,14 +3,18 @@
 A Python port of CritDeck, the Discord bot that builds a shuffled critical hit deck
 for a party level and draws cards from it, one deck per server.
 
-The port is at the Plan stage. There is no code to build or run yet. Status is in
-[`IMPLEMENTATION_LOG.md`](IMPLEMENTATION_LOG.md) and the Plan record is in
-[`docs/evaluation/ACTUAL_CONTRACT_EVALUATION.md`](docs/evaluation/ACTUAL_CONTRACT_EVALUATION.md).
+The port is at CE1: an empty, installable package with its checks. There is no
+bot to run yet. To build it and run the checks, see [`TESTING.md`](TESTING.md);
+it needs Python 3.12 or later. The Plan
+record, implementation log and deviation record are kept on the author's machine
+under `docs/untracked/`, which is not tracked, so a fresh clone does not contain
+them.
 
 ## Where it came from
 
 Ported from `https://github.com/TheScottBot/CritDeck` at commit
-`65e721a73141dc02b5f134b342aa9874175110f5`, subject to the author's answer to CD1.
+`65e721a73141dc02b5f134b342aa9874175110f5`.
 
 The card text is a transcription of Nord Games' Critical Hit Deck (Players 5e) and
-is third party intellectual property. Its licence and location are CD2.
+is third party intellectual property. It is not tracked: deck files live in the
+gitignored `decks/` directory, supplied separately.

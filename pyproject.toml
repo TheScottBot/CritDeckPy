@@ -1,0 +1,104 @@
+[build-system]
+requires = ["setuptools==84.2.1"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "critdeck"
+version = "0.1.0.dev0"
+description = "A Discord bot that builds a shuffled critical hit deck for a party level and draws from it"
+readme = "README.md"
+requires-python = ">=3.12"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "TheScottBot" }]
+classifiers = [
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+# CE1 is an empty package. Runtime dependencies arrive with the phases that need
+# them, each recorded under datum 0.13 first.
+dependencies = []
+
+[project.optional-dependencies]
+# Pinned exactly so every machine runs the same checks; see the CE1 dependency
+# records in the evaluation.
+dev = [
+    "mypy==2.4.0",
+    "pytest==9.1.1",
+    "ruff==0.17.2",
+    "setuptools==84.2.1",
+]
+
+[tool.setuptools.packages.find]
+# Only the bot ships. The repository checks and tests are development only.
+where = ["src"]
+include = ["critdeck*"]
+
+[tool.setuptools.package-data]
+critdeck = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# The repository root goes on the path so tests can import repository_checks,
+# which is deliberately not part of the installed package.
+pythonpath = ["."]
+addopts = ["-ra", "--strict-config", "--strict-markers"]
+# Datum 0.10: warnings are errors, in tests as everywhere else.
+filterwarnings = ["error"]
+xfail_strict = true
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+src = ["src", "."]
+
+[tool.ruff.lint]
+# Every rule, then the few exclusions below, each with its reason. Datum 0.10 asks
+# for the strictest setting the tooling offers.
+select = ["ALL"]
+ignore = [
+    # Docstrings on every module, class and function would mostly paraphrase
+    # descriptive names, which datum 0.6 forbids. Comments explain why instead.
+    "D100", "D101", "D102", "D103", "D104", "D105", "D106", "D107",
+    # D203 and D211, D212 and D213 are mutually exclusive pairs; keep D211, D212.
+    "D203", "D213",
+    # These two conflict with the formatter, per ruff's own documentation.
+    "COM812", "ISC001",
+    # The licence is in LICENSE; a header in every file would repeat it.
+    "CPY001",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# The adapter is the one place allowed to import discord.
+"src/critdeck/discord_adapter/**" = ["TID251"]
+# Tests assert by design, and their planted inputs are literal values.
+"tests/**" = ["S101", "PLR2004"]
+# The repository checks are command line tools that report by printing.
+"repository_checks/**" = ["T201"]
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+# Datum 0.10: portable logic builds and tests with nothing but the language
+# toolchain, so core and commands may not reach Discord, directly or through the
+# adapter.
+"discord".msg = "Only critdeck.discord_adapter may import discord."
+"critdeck.discord_adapter".msg = "Only critdeck.discord_adapter may import itself; core and commands are transport free."
+
+[tool.ruff.lint.pydocstyle]
+convention = "pep257"
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unreachable = true
+enable_error_code = [
+    "ignore-without-code",
+    "possibly-undefined",
+    "redundant-expr",
+    "redundant-self",
+    "truthy-bool",
+    "truthy-iterable",
+    "unused-awaitable",
+]
+mypy_path = "src"
+files = ["src", "repository_checks", "tests"]

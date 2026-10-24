@@ -1,0 +1,51 @@
+name: CI
+
+# Every check the datum requires on a pull request, on every supported Python
+# version: formatting, lint with warnings as errors, strict type checking, the
+# prose and typography scan, and the full test suite. The suite includes the
+# planted violation tests that prove each check still catches what it should.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13", "3.14"]
+
+    steps:
+      # Actions are pinned by commit so a moved tag cannot change what runs.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install the package with its development tools
+        run: python -m pip install -e ".[dev]"
+
+      - name: Formatting
+        run: python -m ruff format --check .
+
+      - name: Lint
+        run: python -m ruff check .
+
+      - name: Type checking
+        run: python -m mypy
+
+      - name: Prose and typography scan
+        run: python -m repository_checks.prose_and_typography
+
+      - name: Tests
+        run: python -m pytest

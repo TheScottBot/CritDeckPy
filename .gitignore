@@ -1,2 +1,16 @@
 */untracked
 .idea
+# Deck files are third party card text and event data, supplied separately.
+decks/*
+logs/
+.env
+
+# Tool state, recreated by the commands in TESTING.md.
+.venv/
+__pycache__/
+*.egg-info/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+build/
+dist/
