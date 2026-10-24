@@ -71,8 +71,9 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 # The adapter is the one place allowed to import discord.
 "src/critdeck/discord_adapter/**" = ["TID251"]
-# Tests assert by design, and their planted inputs are literal values.
-"tests/**" = ["S101", "PLR2004"]
+# Tests assert by design, their planted inputs are literal values, and pytest
+# passes parametrised expectations, booleans included, positionally.
+"tests/**" = ["S101", "PLR2004", "FBT001"]
 # The repository checks are command line tools that report by printing.
 "repository_checks/**" = ["T201"]
 

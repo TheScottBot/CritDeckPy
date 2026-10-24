@@ -14,6 +14,8 @@ from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import TYPE_CHECKING, Never
 
+from critdeck.core.party_levels import is_ordinary_party_level
+
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
@@ -64,6 +66,7 @@ class DeckFileRejectionReason(enum.Enum):
     NO_CARDS = "no cards"
     NO_EFFECTS = "card with no effects"
     DUPLICATE_SPECIAL_LEVEL = "special level claimed by more than one file"
+    SPECIAL_LEVEL_INSIDE_ORDINARY_RANGE = "special level inside the ordinary party level range"
 
 
 class DeckFileRejectedError(Exception):
@@ -179,6 +182,15 @@ def _load_special_level_decks(
             special_level_deck = parse_special_level_deck_file(special_bytes)
         except DeckFileRejectedError as special_rejection:
             left_out_files.append(LeftOutDeckFile(special_relative_path, special_rejection.reason))
+            continue
+        # An ordinary level already has a deck; a special deck claiming one would
+        # silently replace it for every table playing at that level.
+        if is_ordinary_party_level(special_level_deck.level):
+            left_out_files.append(
+                LeftOutDeckFile(
+                    special_relative_path, DeckFileRejectionReason.SPECIAL_LEVEL_INSIDE_ORDINARY_RANGE
+                )
+            )
             continue
         special_level_claims.setdefault(special_level_deck.level, []).append(
             (special_relative_path, special_level_deck)

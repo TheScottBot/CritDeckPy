@@ -20,6 +20,7 @@ from critdeck.core.catalogue import (
     parse_special_level_deck_file,
     parse_tiered_deck_file,
 )
+from critdeck.core.party_levels import MAXIMUM_PARTY_LEVEL, MINIMUM_PARTY_LEVEL
 from tests.conftest import (
     build_card_record,
     build_special_level_deck_bytes,
@@ -447,3 +448,38 @@ def test_load_deck_catalogue_refuses_deck_directory_that_cannot_be_listed(
         load_deck_catalogue(deck_directory)
 
     assert rejection.value.reason is Reason.UNREADABLE
+
+
+@pytest.mark.parametrize("ordinary_level", [MINIMUM_PARTY_LEVEL, 7, MAXIMUM_PARTY_LEVEL])
+def test_load_deck_catalogue_leaves_out_special_level_inside_the_ordinary_range(
+    tmp_path: Path, ordinary_level: int
+) -> None:
+    # An ordinary level already has a deck; a file claiming one would silently
+    # replace it for every table playing at that level.
+    deck_directory = write_deck_directory(
+        tmp_path,
+        build_tiered_deck_bytes(["Setback"]),
+        special_level_files={"clash.json": build_special_level_deck_bytes(ordinary_level)},
+    )
+
+    deck_catalogue = load_deck_catalogue(deck_directory)
+
+    assert deck_catalogue.special_level_decks == {}
+    assert deck_catalogue.left_out_files == (
+        LeftOutDeckFile(
+            PurePosixPath("special-levels/clash.json"), Reason.SPECIAL_LEVEL_INSIDE_ORDINARY_RANGE
+        ),
+    )
+
+
+@pytest.mark.parametrize("outside_level", [MINIMUM_PARTY_LEVEL - 1, MAXIMUM_PARTY_LEVEL + 1])
+def test_load_deck_catalogue_accepts_special_level_just_outside_the_ordinary_range(
+    tmp_path: Path, outside_level: int
+) -> None:
+    deck_directory = write_deck_directory(
+        tmp_path,
+        build_tiered_deck_bytes(["Setback"]),
+        special_level_files={"edge.json": build_special_level_deck_bytes(outside_level)},
+    )
+
+    assert set(load_deck_catalogue(deck_directory).special_level_decks) == {outside_level}

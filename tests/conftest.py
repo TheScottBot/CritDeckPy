@@ -111,3 +111,19 @@ class FakeCardShuffler:
     def shuffle(self, cards_to_shuffle: list[Card], /) -> None:
         self.shuffle_count += 1
         cards_to_shuffle.reverse()
+
+
+class FakeDeckCatalogueLoader:
+    """Hands back a prepared catalogue, or raises a prepared error, and counts calls."""
+
+    def __init__(self, deck_catalogue: DeckCatalogue | None = None, error: Exception | None = None) -> None:
+        self._deck_catalogue = deck_catalogue
+        self._error = error
+        self.load_count = 0
+
+    def __call__(self) -> DeckCatalogue:
+        self.load_count += 1
+        if self._error is not None:
+            raise self._error
+        assert self._deck_catalogue is not None
+        return self._deck_catalogue
