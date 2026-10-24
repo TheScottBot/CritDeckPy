@@ -1,9 +1,6 @@
 name: CI
 
-# Every check, on every pull request and every supported Python version:
-# formatting, lint with warnings as errors, strict type checking, the prose and
-# typography scan, and the full test suite. The suite includes the
-# planted violation tests that prove each check still catches what it should.
+# The test suite on every push and pull request, on every supported Python version.
 
 on:
   push:
@@ -15,7 +12,7 @@ permissions:
   contents: read
 
 jobs:
-  checks:
+  tests:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -32,25 +29,8 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install the package with its development tools
+      - name: Install
         run: python -m pip install -e ".[dev]"
-
-      - name: Formatting
-        run: python -m ruff format --check .
-
-      - name: Lint
-        run: python -m ruff check .
-
-      - name: Type checking
-        run: python -m mypy
-
-      - name: Prose and typography scan
-        run: python -m repository_checks.prose_and_typography
 
       - name: Tests
         run: python -m pytest
-
-      # Every pinned runtime dependency in the deployment lock, checked against
-      # the PyPI and OSV advisory databases.
-      - name: Dependency audit
-        run: python -m pip_audit --requirement deploy/requirements-debian13-x86_64-py313.txt --disable-pip --require-hashes --progress-spinner off

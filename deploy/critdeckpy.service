@@ -16,7 +16,7 @@ Group=critdeckpy
 WorkingDirectory=/opt/CritDeckPy
 # Run from the checkout's source rather than an installed package, so updating
 # is a git pull and a restart, with nothing to build on the host.
-Environment=PYTHONPATH=/opt/CritDeckPy/src
+Environment=PYTHONPATH=/opt/CritDeckPy
 ExecStart=/opt/CritDeckPy/.venv/bin/python -m critdeck
 # A wrong token or a missing base deck exits with status 1; waiting between
 # attempts keeps a broken configuration from spinning, and the journal says why.

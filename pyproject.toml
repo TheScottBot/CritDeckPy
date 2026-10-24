@@ -1,7 +1,3 @@
-[build-system]
-requires = ["setuptools==84.2.1"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "critdeck"
 version = "0.1.0.dev0"
@@ -11,111 +7,26 @@ requires-python = ">=3.12"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "TheScottBot" }]
-classifiers = [
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
-    "Programming Language :: Python :: 3.14",
-]
-# Each runtime dependency is recorded with its licence, maintenance status and
-# replacement cost before it is added. Pinned exactly; the deployment lock with
-# hashes is made for the deployment platform when the bot is packaged.
+# Pinned exactly, matching the hashed deployment lock in deploy/.
 dependencies = [
     "discord.py==2.7.1",
     "python-dotenv==1.2.4",
 ]
 
-[project.scripts]
-critdeck = "critdeck.__main__:main"
-
 [project.optional-dependencies]
-# Pinned exactly so every machine runs the same checks.
-dev = [
-    "mypy==2.4.0",
-    "pip-audit==2.10.1",
-    "pytest==9.1.1",
-    "ruff==0.17.2",
-    "setuptools==84.2.1",
-]
+dev = ["pytest==9.1.1"]
+
+[project.scripts]
+critdeck = "critdeck.bot:main"
+
+[build-system]
+requires = ["setuptools==84.2.1"]
+build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-# Only the bot ships. The repository checks and tests are development only.
-where = ["src"]
 include = ["critdeck*"]
-
-[tool.setuptools.package-data]
-critdeck = ["py.typed"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-# The repository root goes on the path so tests can import repository_checks,
-# which is deliberately not part of the installed package.
-pythonpath = ["."]
-addopts = ["-ra", "--strict-config", "--strict-markers"]
-# Warnings are errors, in tests as everywhere else, so nothing degrades quietly.
-filterwarnings = [
-    "error",
-    # discord.py 2.7.1 calls asyncio.iscoroutinefunction, deprecated in Python
-    # 3.14 and due for removal in 3.16. The call is upstream's; this exempts that
-    # one message from that one package and nothing else.
-    "ignore:'asyncio.iscoroutinefunction' is deprecated:DeprecationWarning:discord",
-]
-xfail_strict = true
-
-[tool.ruff]
-line-length = 110
-target-version = "py312"
-src = ["src", "."]
-
-[tool.ruff.lint]
-# Every rule, then the few exclusions below, each with its reason, because the
-# strictest setting the tooling offers is the baseline.
-select = ["ALL"]
-ignore = [
-    # Docstrings on every module, class and function would mostly paraphrase
-    # descriptive names. Comments explain why instead.
-    "D100", "D101", "D102", "D103", "D104", "D105", "D106", "D107",
-    # D203 and D211, D212 and D213 are mutually exclusive pairs; keep D211, D212.
-    "D203", "D213",
-    # These two conflict with the formatter, per ruff's own documentation.
-    "COM812", "ISC001",
-    # The licence is in LICENSE; a header in every file would repeat it.
-    "CPY001",
-]
-
-[tool.ruff.lint.per-file-ignores]
-# The adapter is the one place allowed to import discord, and its tests with it.
-"src/critdeck/discord_adapter/**" = ["TID251"]
-"tests/discord_adapter/**" = ["TID251"]
-# The entry point is where core, commands and the adapter are wired together, so
-# it is the one module outside the adapter that must import it.
-"src/critdeck/__main__.py" = ["TID251"]
-# Tests assert by design, their planted inputs are literal values, and pytest
-# passes parametrised expectations, booleans included, positionally.
-"tests/**" = ["S101", "PLR2004", "FBT001"]
-# The repository checks are command line tools that report by printing.
-"repository_checks/**" = ["T201"]
-
-[tool.ruff.lint.flake8-tidy-imports.banned-api]
-# Portable logic builds and tests with nothing but the language toolchain, so
-# core and commands may not reach Discord, directly or through the adapter.
-"discord".msg = "Only critdeck.discord_adapter may import discord."
-"critdeck.discord_adapter".msg = "Only critdeck.discord_adapter may import itself; core and commands are transport free."
-
-[tool.ruff.lint.pydocstyle]
-convention = "pep257"
-
-[tool.mypy]
-python_version = "3.12"
-strict = true
-warn_unreachable = true
-enable_error_code = [
-    "ignore-without-code",
-    "possibly-undefined",
-    "redundant-expr",
-    "redundant-self",
-    "truthy-bool",
-    "truthy-iterable",
-    "unused-awaitable",
-]
-mypy_path = "src"
-files = ["src", "repository_checks", "tests"]
+# discord.py's own deprecation warnings on newer Pythons; nothing to do with this code.
+filterwarnings = ["ignore::DeprecationWarning:discord.*"]

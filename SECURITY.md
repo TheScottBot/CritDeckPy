@@ -30,8 +30,8 @@ author before release.
   the bot can read every message in channels it can see. It acts only on
   messages that start with the prefix and logs none of them.
 - One hidden reply links to an external GIF host, kept from the Go bot.
-- discord.py 2.7.1 uses a function Python 3.14 deprecates; the warning is
-  exempted narrowly in the tests until discord.py releases a fix.
+- discord.py 2.7.1 uses a function Python 3.14 deprecates; the tests ignore
+  discord.py's deprecation warnings, as ktdi's do, until it releases a fix.
 
 ## Limitations
 
@@ -42,13 +42,6 @@ author before release.
 - Discord rate limits global command syncs; the bot syncs only when asked.
 
 ## Dependency scanning
-
-- CI runs `pip-audit` on every pull request against the deployment lock, using
-  the PyPI and OSV advisory databases. Run it locally with:
-
-```bash
-python -m pip_audit --requirement deploy/requirements-debian13-x86_64-py313.txt --disable-pip --require-hashes --progress-spinner off
-```
 
 - Dependabot proposes weekly updates for the Python dependencies, the deployment
   lock and the pinned CI actions, and raises security alerts as advisories are
