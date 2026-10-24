@@ -6,6 +6,7 @@ text after the port. The rest are new, written for slash commands.
 
 from __future__ import annotations
 
+from critdeck.core.catalogue import StrengthTier
 from critdeck.core.party_levels import MAXIMUM_PARTY_LEVEL, MINIMUM_PARTY_LEVEL
 
 # From the Go bot.
@@ -24,13 +25,26 @@ BASE_DECK_UNAVAILABLE_TEXT = (
 )
 EXTENSIONS_LEFT_OUT_TEXT = "Some deck extensions could not be loaded and were left out."
 
+# Read from the tier table, so help can never disagree with the levels the deck
+# actually uses. The first tier is always in the deck, so it is not announced.
+_TIER_ARRIVALS = ", ".join(
+    f"{tier.strength_name} from {tier.minimum_party_level}"
+    for tier in StrengthTier
+    if tier.minimum_party_level > MINIMUM_PARTY_LEVEL
+)
+
 # Formatted with command_prefix, which is configurable. The special levels and
-# the hidden commands are deliberately absent.
+# the hidden commands are deliberately absent. The last line uses Discord's small
+# text markdown.
 HELP_TEXT = (
-    "CritDeck draws critical hit cards for your table.\n"
-    f"/newdeck level: build a new shuffled deck for a party level from {MINIMUM_PARTY_LEVEL} "
-    f"to {MAXIMUM_PARTY_LEVEL}. The deck is shared across the whole server.\n"
-    "/draw: draw the next card from the server's deck.\n"
-    "/help: show this message.\n"
-    "The commands also work typed with the prefix {command_prefix}, for example {command_prefix}newdeck 7"
+    "**CritDeck** \N{GAME DIE}\n"
+    "For when a natural 20 deserves more than double dice.\n"
+    "\n"
+    f"`/newdeck level` Shuffle a fresh crit deck for a party level from {MINIMUM_PARTY_LEVEL} "
+    f"to {MAXIMUM_PARTY_LEVEL}. Nastier cards join as you level up: {_TIER_ARRIVALS}. "
+    "One deck per server, shared by every channel.\n"
+    "`/draw` Flip the next card. Run the deck dry and it reshuffles itself.\n"
+    "`/help` This, again.\n"
+    "\n"
+    "-# Every command also works typed with `{command_prefix}`, for example `{command_prefix}newdeck 7`."
 )

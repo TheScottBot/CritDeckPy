@@ -8,8 +8,9 @@ claims it.
 
 from __future__ import annotations
 
-MINIMUM_PARTY_LEVEL = 0
-# The Go bot accepted any integer. Twenty is the highest party level in play.
+# The Go bot accepted any integer. D&D characters run from level 1 to level 20,
+# so anything else is either a typo or a special level.
+MINIMUM_PARTY_LEVEL = 1
 MAXIMUM_PARTY_LEVEL = 20
 
 

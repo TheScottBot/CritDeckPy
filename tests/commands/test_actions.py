@@ -85,7 +85,7 @@ def test_start_new_deck_accepts_ordinary_bounds_and_loaded_special_levels(party_
     assert command_result.outcome is CommandOutcome.DECK_CREATED
 
 
-@pytest.mark.parametrize("party_level", [MINIMUM_PARTY_LEVEL - 2, MAXIMUM_PARTY_LEVEL + 1, 667, 10**30])
+@pytest.mark.parametrize("party_level", [MINIMUM_PARTY_LEVEL - 1, MAXIMUM_PARTY_LEVEL + 1, 667, 10**30])
 def test_start_new_deck_refuses_a_level_outside_the_range_and_keeps_the_current_deck(
     party_level: int,
 ) -> None:
@@ -133,7 +133,7 @@ def test_start_new_deck_says_when_an_extension_was_left_out() -> None:
 
     command_result = start_new_deck(
         GUILD_ID,
-        0,
+        MINIMUM_PARTY_LEVEL,
         FakeDeckCatalogueLoader(catalogue_with_left_out_files(left_out_extension)),
         DeckRegistry(FakeCardShuffler()),
     )
@@ -149,7 +149,7 @@ def test_start_new_deck_says_when_the_whole_extensions_folder_was_left_out() -> 
 
     command_result = start_new_deck(
         GUILD_ID,
-        0,
+        MINIMUM_PARTY_LEVEL,
         FakeDeckCatalogueLoader(catalogue_with_left_out_files(left_out_folder)),
         DeckRegistry(FakeCardShuffler()),
     )
@@ -173,7 +173,7 @@ def test_start_new_deck_does_not_tell_the_table_about_other_left_out_files(
 ) -> None:
     command_result = start_new_deck(
         GUILD_ID,
-        0,
+        MINIMUM_PARTY_LEVEL,
         FakeDeckCatalogueLoader(catalogue_with_left_out_files(quietly_left_out_file)),
         DeckRegistry(FakeCardShuffler()),
     )
@@ -240,3 +240,18 @@ def test_show_help_is_private_and_names_the_configured_prefix(command_prefix: st
 def test_deck_created_and_direct_message_text_match_the_go_bot() -> None:
     assert DECK_CREATED_TEXT.format(card_count=50) == "Crit deck created. It has: 50 cards"
     assert DIRECT_MESSAGE_TEXT == "This command only works in a server, not in a direct message."
+
+
+def test_show_help_names_each_tier_from_the_level_it_joins() -> None:
+    help_text = show_help("?").response.text
+
+    for tier in StrengthTier:
+        if tier.minimum_party_level > MINIMUM_PARTY_LEVEL:
+            assert f"{tier.strength_name} from {tier.minimum_party_level}" in help_text
+
+
+def test_show_help_formats_commands_as_code() -> None:
+    help_text = show_help("?").response.text
+
+    for command_usage in ("`/newdeck level`", "`/draw`", "`/help`", "`?newdeck 7`"):
+        assert command_usage in help_text
